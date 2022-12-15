@@ -8,6 +8,10 @@
 #include "pico/multicore.h"
 #include "hardware/timer.h"
 #include "hardware/adc.h"
+#include "hardware/spi.h"
+
+#include "spi.h"
+#include "lcd.h"
 
 #define RF_BIT 150  //The symbol bit length in us
 #define RF_SYMBOL 4*RF_BIT  //The symbol length
@@ -22,109 +26,129 @@
 #define RECEIVER_PIN 14
 
 
+#define LCD_WIDTH 128
+#define LCD_HEIGHT 64
+
 bool read_bit(uint8_t *bit) {
-  bool continuous = true;
+	bool continuous = true;
 
-  uint32_t begin = time_us_32();
-  while (gpio_get(RECEIVER_PIN) == 0) {
-    sleep_us(RF_BIT/2);
-  }
-  uint32_t delay = time_us_32() - begin;
-  
+	uint32_t begin = time_us_32();
+	while (gpio_get(RECEIVER_PIN) == 0) {
+		sleep_us(RF_BIT/2);
+	}
+	uint32_t delay = time_us_32() - begin;
+	
 
-  if (delay > 2*RF_SYMBOL) {
-    continuous = false;
-  }
-  
-  sleep_us(2*RF_BIT);
-  if (gpio_get(RECEIVER_PIN)) {
-    *bit = 1;
-  }
-  else {
-    *bit = 0;
-  }
+	if (delay > 2*RF_SYMBOL) {
+		continuous = false;
+	}
+	
+	sleep_us(2*RF_BIT);
+	if (gpio_get(RECEIVER_PIN)) {
+		*bit = 1;
+	}
+	else {
+		*bit = 0;
+	}
 
-  sleep_us(RF_BIT);
-  return continuous;
+	sleep_us(RF_BIT);
+	return continuous;
 }
 
 bool read_byte(uint8_t *byte) {
-  *byte = 0;
+	*byte = 0;
 
-  for (int i = 7; i >= 0; i--) {
-    uint8_t bit = 0;
-    if (read_bit(&bit) == false) {
-      return false;
-    }
-    *byte |= bit <<i;
-  }
+	for (int i = 7; i >= 0; i--) {
+		uint8_t bit = 0;
+		if (read_bit(&bit) == false) {
+			return false;
+		}
+		*byte |= bit <<i;
+	}
 
-  return true;
+	return true;
 }
 
 bool read_message() {
-  // Preample
-  int captured_ones = 0;
-  uint8_t last_bit = 0;
+	// Preample
+	int captured_ones = 0;
+	uint8_t last_bit = 0;
 
-  while (captured_ones < 8 || last_bit == 1) {
-    if (read_bit(&last_bit) && (last_bit == 1 || captured_ones >= 8)) {
-      captured_ones++;
-    }
-    else {
-      captured_ones = 0;
-    }
-  }
+	while (captured_ones < 8 || last_bit == 1) {
+		if (read_bit(&last_bit) && (last_bit == 1 || captured_ones >= 8)) {
+			captured_ones++;
+		}
+		else {
+			captured_ones = 0;
+		}
+	}
 
-  // Start
-  int captured_start = 1;
+	// Start
+	int captured_start = 1;
 
-  while (captured_start < 2*RF_START) {
-    uint8_t new_bit = 0;
-    if (read_bit(&new_bit) && new_bit != last_bit) {
-      last_bit = new_bit;
-      captured_start++;
-    }
-    else {
-      return false;
-    }
-  }
+	while (captured_start < 2*RF_START) {
+		uint8_t new_bit = 0;
+		if (read_bit(&new_bit) && new_bit != last_bit) {
+			last_bit = new_bit;
+			captured_start++;
+		}
+		else {
+			return false;
+		}
+	}
 
-  // Packet length
-  uint8_t len = 0;
-  if (read_byte(&len) == false) {
-    return false;
-  }
+	// Packet length
+	uint8_t len = 0;
+	if (read_byte(&len) == false) {
+		return false;
+	}
 
-  
-  // Message
-  std::vector <uint8_t> buffer;
-  for (int i = 0; i < len; i++) {
-    uint8_t byte = 0;
-    if (read_byte(&byte) == false) {
-      return false;
-    }
-    buffer.push_back(byte);
-  }
+	
+	// Message
+	std::vector <uint8_t> buffer;
+	for (int i = 0; i < len; i++) {
+		uint8_t byte = 0;
+		if (read_byte(&byte) == false) {
+			return false;
+		}
+		buffer.push_back(byte);
+	}
 
-  for (int i = 0; i < len; i++) {
-    printf("%c", buffer[i]);
-  }
-  return true;
+	for (int i = 0; i < len; i++) {
+		printf("%c", buffer[i]);
+	}
+	return true;
 }
+
+// Template values: 19.360001°C, 99657.656250 Pa, 15.325737%
+
+float t = 19.360001f;
+float h = 15.325737f;
+float p = 996.57656250f;
 
 
 int main() {
-  // Setup stuff
-  stdio_init_all();
+	// Setup stuff
+	stdio_init_all();
 
-  gpio_init(RECEIVER_PIN);
-  gpio_set_dir(RECEIVER_PIN, GPIO_IN);
-  gpio_pull_down(RECEIVER_PIN);
+	/*gpio_init(RECEIVER_PIN);
+	gpio_set_dir(RECEIVER_PIN, GPIO_IN);
+	gpio_pull_down(RECEIVER_PIN);
 
-  while (true) {
-    read_message();
-  }
+	while (true) {
+		read_message();
+	}*/
+	
+	lcd_setup(spi0);
+	lcd_backlight(true);
 
-  return 0;
+	lcd_hud_setup();
+	lcd_hud_update_values(t, h, p);
+
+	for (int i = 1; i < 100; i++) {
+		sleep_ms(1000);
+		lcd_hud_update_values(t+i, h+i, p+i);
+	}
+
+	return 0;
 }
