@@ -138,17 +138,13 @@ int main() {
 	while (true) {
 		read_message();
 	}*/
-	
+
 	lcd_setup(spi0);
 	lcd_backlight(true);
 
 	lcd_hud_setup();
-	lcd_hud_update_values(t, h, p);
-
-	for (int i = 1; i < 100; i++) {
-		sleep_ms(1000);
-		lcd_hud_update_values(t+i, h+i, p+i);
-	}
+	lcd_hud_update_outside_values(t-3, h+20, p+10);
+	lcd_hud_update_inside_values(t, h, p);
 
 	return 0;
 }

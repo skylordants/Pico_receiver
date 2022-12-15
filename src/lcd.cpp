@@ -178,7 +178,7 @@ bool lcd_write_chars(char *buffer, uint8_t len, uint8_t line, uint8_t pos) {
 }
 
 bool lcd_hud_setup() {
-	char buf[14] = "hPaC%OUTSIDE:";
+	char buf[21] = "hPaC%OUTSIDE:INSIDE:";
 	lcd_write_chars(buf, 3, 5, 20);
 	lcd_write_chars(buf+3, 1, 6, 9);
 	lcd_write_chars(buf+4, 1, 6, 20);
@@ -186,10 +186,19 @@ bool lcd_hud_setup() {
 
 	lcd_ram_select_address(6, 8*5);
 	lcd_ram_write(deg, 5);
+
+	lcd_write_chars(buf, 3, 1, 20);
+	lcd_write_chars(buf+3, 1, 2, 9);
+	lcd_write_chars(buf+4, 1, 2, 20);
+	lcd_write_chars(buf+13, 7, 3, 0);
+
+	lcd_ram_select_address(2, 8*5);
+	lcd_ram_write(deg, 5);
+
 	return true;
 }
 
-bool lcd_hud_update_values(float temperature, float humidity, float pressure) {
+bool lcd_hud_update_outside_values(float temperature, float humidity, float pressure) {
 	char t[10], h[10], p[10];
 
 	snprintf(t, sizeof t, "%f", temperature);
@@ -199,5 +208,18 @@ bool lcd_hud_update_values(float temperature, float humidity, float pressure) {
 	lcd_write_chars(t, 5, 6, 3);
 	lcd_write_chars(h, 5, 6, 14);
 	lcd_write_chars(p, 5, 5, 14);
+	return true;
+}
+
+bool lcd_hud_update_inside_values(float temperature, float humidity, float pressure) {
+	char t[10], h[10], p[10];
+
+	snprintf(t, sizeof t, "%f", temperature);
+	snprintf(h, sizeof h, "%f", humidity);
+	snprintf(p, sizeof p, "%f", pressure);
+
+	lcd_write_chars(t, 5, 2, 3);
+	lcd_write_chars(h, 5, 2, 14);
+	lcd_write_chars(p, 5, 1, 14);
 	return true;
 }

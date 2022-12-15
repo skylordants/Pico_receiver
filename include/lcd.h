@@ -24,6 +24,8 @@ bool lcd_write_chars(char *buffer, uint8_t len, uint8_t line, uint8_t pos);
 
 bool lcd_hud_setup();
 
-bool lcd_hud_update_values(float temperature, float humidity, float pressure);
+bool lcd_hud_update_outside_values(float temperature, float humidity, float pressure);
+
+bool lcd_hud_update_inside_values(float temperature, float humidity, float pressure);
 
 #endif
