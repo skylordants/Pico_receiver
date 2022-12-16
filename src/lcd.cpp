@@ -7,7 +7,6 @@
 #include "hardware/spi.h"
 #include "hardware/gpio.h"
 
-#include "spi.h"
 #include "lcd.h"
 #include "glcdfont.h"
 
