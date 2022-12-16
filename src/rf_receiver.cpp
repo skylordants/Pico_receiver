@@ -65,6 +65,15 @@ bool rf_read_byte(uint8_t *byte) {
 	return true;
 }
 
+uint8_t calculate_error_detection (const std::vector <uint8_t> &buffer, uint8_t len) {
+	uint8_t res = 0;
+	for (int i = 0; i < len; i++) {
+		res ^= buffer[i];
+	}
+
+	return res;
+}
+
 bool rf_read_message() {
 	// Preample
 	int captured_ones = 0;
@@ -95,7 +104,7 @@ bool rf_read_message() {
 
 	// Packet length
 	uint8_t len = 0;
-	if (rf_read_byte(&len) == false) {
+	if (rf_read_byte(&len) == false || len == 0) {
 		return false;
 	}
 
@@ -109,8 +118,16 @@ bool rf_read_message() {
 		buffer.push_back(byte);
 	}
 
-	for (int i = 0; i < len; i++) {
+	uint8_t error_code = calculate_error_detection(buffer, len-1);
+
+	for (int i = 0; i < len-1; i++) {
 		printf("%c", buffer[i]);
 	}
+
+	if (error_code != buffer[len-1]) {
+		printf(" Error code doesn't match\n");
+		return false;
+	}
+
 	return true;
 }
