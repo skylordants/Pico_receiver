@@ -1,12 +1,14 @@
 #include <vector>
 #include <stdio.h>
+#include <string.h>
 
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
 #include "hardware/timer.h"
 
+#include "aht20.h"
 
-#define RF_BIT 150  //The symbol bit length in us
+#define RF_BIT 250  //The symbol bit length in us
 #define RF_SYMBOL 4*RF_BIT  //The symbol length
 #define RF_ZERO 1*RF_BIT
 #define RF_ONE 3*RF_BIT
@@ -18,7 +20,18 @@
 
 #define RECEIVER_PIN 14
 
-bool rf_receiver_init() {
+uint32_t *aht20_temperature = 0;
+uint32_t *aht20_humidity = 0;
+int32_t *bmp280_temperature = 0;
+uint32_t *bmp280_pressure = 0;
+
+char sensor_packet_header [] = "SENSORS:";
+
+bool rf_receiver_init(uint32_t *aht20_t, uint32_t *aht20_h, int32_t *bmp280_t, uint32_t *bmp280_p) {
+	aht20_temperature = aht20_t;
+	aht20_humidity = aht20_h;
+	bmp280_temperature = bmp280_t;
+	bmp280_pressure = bmp280_p;
 	gpio_init(RECEIVER_PIN);
 	gpio_set_dir(RECEIVER_PIN, GPIO_IN);
 	gpio_pull_down(RECEIVER_PIN);
@@ -65,7 +78,7 @@ bool rf_read_byte(uint8_t *byte) {
 	return true;
 }
 
-uint8_t calculate_error_detection (const std::vector <uint8_t> &buffer, uint8_t len) {
+uint8_t calculate_error_detection (const char *buffer, uint8_t len) {
 	uint8_t res = 0;
 	for (int i = 0; i < len; i++) {
 		res ^= buffer[i];
@@ -109,25 +122,32 @@ bool rf_read_message() {
 	}
 
 	// Message
-	std::vector <uint8_t> buffer;
+	char buffer [257]; // The buffer is 257 bytes long because char buffer makes other stuff easier, the length is specified in 1 byte so 256 values + error checking byte
 	for (int i = 0; i < len; i++) {
 		uint8_t byte = 0;
 		if (rf_read_byte(&byte) == false) {
 			return false;
 		}
-		buffer.push_back(byte);
+		buffer[i] = byte;
 	}
 
 	uint8_t error_code = calculate_error_detection(buffer, len-1);
-
-	for (int i = 0; i < len-1; i++) {
-		printf("%c", buffer[i]);
-	}
 
 	if (error_code != buffer[len-1]) {
 		printf(" Error code doesn't match\n");
 		return false;
 	}
 
+	if (strncmp(buffer, sensor_packet_header, 8) == 0) { // Ignore the last byte because that is the null byte from string
+		printf("New sensor data\n");
+		memcpy(aht20_temperature, buffer+8, 4);
+		memcpy(aht20_humidity, buffer+12, 4);
+		memcpy(bmp280_temperature, buffer+16, 4);
+		memcpy(bmp280_pressure, buffer+20, 4);
+
+		printf("BMP280 - Temperature: %f°C, Pressure %f Pa\n", (float)*bmp280_temperature/100, (float)*bmp280_pressure/256);
+		printf("AHT20 - Temperature: %f°C, Humidity %f%%\n", aht20_calculate_temperature(*aht20_temperature), aht20_calculate_humidity(*aht20_humidity));
+	}
+
 	return true;
-}
+}	

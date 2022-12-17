@@ -9,6 +9,7 @@
 
 #include "lcd.h"
 #include "rf_receiver.h"
+#include "aht20.h"
 
 
 // Template values: 19.360001°C, 99657.656250 Pa, 15.325737%
@@ -23,17 +24,20 @@ int main() {
 	// Setup stuff
 	lcd_setup(spi0);
 	lcd_backlight(true);
-	rf_receiver_init();
+
+	uint32_t aht20_t = 0;
+	uint32_t aht20_h = 0;
+	int32_t bmp280_t = 0;
+	uint32_t bmp280_p = 0;
+
+	rf_receiver_init(&aht20_t, &aht20_h, &bmp280_t, &bmp280_p);
 
 	lcd_hud_setup();
-	lcd_hud_update_outside_values(t-3, h+20, p+10);
 	lcd_hud_update_inside_values(t, h, p);
 
 	while (true) {
-		lcd_hud_setup();
-		lcd_hud_update_outside_values(t-3, h+20, p+10);
-		lcd_hud_update_inside_values(t, h, p);
 		rf_read_message();
+		lcd_hud_update_outside_values((float)bmp280_t/100, aht20_calculate_humidity(aht20_h), (float)bmp280_p/256);
 	}
 
 	return 0;
