@@ -37,7 +37,7 @@ int main() {
 
 	while (true) {
 		rf_read_message();
-		lcd_hud_update_outside_values((float)bmp280_t/100, aht20_calculate_humidity(aht20_h), (float)bmp280_p/256);
+		lcd_hud_update_outside_values((float)bmp280_t/100, aht20_calculate_humidity(aht20_h), (float)bmp280_p/25600);
 	}
 
 	return 0;
