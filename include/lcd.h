@@ -26,6 +26,6 @@ bool lcd_hud_setup();
 
 bool lcd_hud_update_outside_values(float temperature, float humidity, float pressure);
 
-bool lcd_hud_update_inside_values(float temperature, float humidity, float pressure);
+bool lcd_hud_update_inside_values(float temperature, float humidity);
 
 #endif

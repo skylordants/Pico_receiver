@@ -18,15 +18,10 @@ bool i2c_setup() {
 	return true;
 }
 
-// Write 1 byte to the specified register
+// Write to the specified register
 int i2c_reg_write(const uint addr, const uint8_t reg, uint8_t *buf, const uint8_t nbytes) {
 	int num_bytes_read = 0;
 	uint8_t msg[nbytes + 1];
-
-	// Check to make sure caller is sending 1 or more bytes
-	if (nbytes < 1) {
-		return 0;
-	}
 
 	// Append register address to front of data packet
 	msg[0] = reg;
@@ -35,7 +30,7 @@ int i2c_reg_write(const uint addr, const uint8_t reg, uint8_t *buf, const uint8_
 	}
 
 	// Write data to register(s) over I2C
-	i2c_write_blocking(i2c, addr, msg, (nbytes + 1), false);
+	num_bytes_read = i2c_write_blocking(i2c, addr, msg, (nbytes + 1), false);
 
 	return num_bytes_read;
 }

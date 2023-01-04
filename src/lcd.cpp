@@ -186,7 +186,6 @@ bool lcd_hud_setup() {
 	lcd_ram_select_address(6, 8*5);
 	lcd_ram_write(deg, 5);
 
-	lcd_write_chars(buf, 3, 1, 20);
 	lcd_write_chars(buf+3, 1, 2, 9);
 	lcd_write_chars(buf+4, 1, 2, 20);
 	lcd_write_chars(buf+13, 7, 3, 0);
@@ -210,15 +209,13 @@ bool lcd_hud_update_outside_values(float temperature, float humidity, float pres
 	return true;
 }
 
-bool lcd_hud_update_inside_values(float temperature, float humidity, float pressure) {
+bool lcd_hud_update_inside_values(float temperature, float humidity) {
 	char t[10], h[10], p[10];
 
 	snprintf(t, sizeof t, "%f", temperature);
 	snprintf(h, sizeof h, "%f", humidity);
-	snprintf(p, sizeof p, "%f", pressure);
 
 	lcd_write_chars(t, 5, 2, 3);
 	lcd_write_chars(h, 5, 2, 14);
-	lcd_write_chars(p, 5, 1, 14);
 	return true;
 }
