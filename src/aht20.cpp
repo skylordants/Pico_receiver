@@ -21,10 +21,10 @@ bool aht20_setup () {
 
 	// Device not calibrated
 	if ((data[0]&(1<<3)) == 0) {
-	data[0] = AHT20_INIT_P1;
-	data[1] = AHT20_INIT_P2;
+		data[0] = AHT20_INIT_P1;
+		data[1] = AHT20_INIT_P2;
 
-	i2c_reg_write(AHT20_ADDRESS, AHT20_INIT, data, 2);
+		i2c_reg_write(AHT20_ADDRESS, AHT20_INIT, data, 2);
 	}
 
 	return true;
@@ -52,9 +52,9 @@ bool aht20_measure(uint32_t *temperature, uint32_t* humidity) {
 }
 
 float aht20_calculate_temperature(uint32_t temperature) {
-	return ((float)temperature/(1<<20))*200-50;
+	return (float)(((double)temperature/(1<<20))*200-50);
 }
 
 float aht20_calculate_humidity(uint32_t humidity) {
-	return ((float)humidity/(1<<20)*200-50);
+	return (float)((double)humidity/(1<<20)*100);
 }
