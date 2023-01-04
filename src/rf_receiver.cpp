@@ -20,6 +20,8 @@
 
 #define RECEIVER_PIN 14
 
+#define DEBUG false
+
 uint32_t *aht20_temperature = 0;
 uint32_t *aht20_humidity = 0;
 int32_t *bmp280_temperature = 0;
@@ -134,19 +136,21 @@ bool rf_read_message() {
 	uint8_t error_code = calculate_error_detection(buffer, len-1);
 
 	if (error_code != buffer[len-1]) {
-		printf(" Error code doesn't match\n");
+		if (DEBUG) printf(" Error code doesn't match\n");
 		return false;
 	}
 
 	if (strncmp(buffer, sensor_packet_header, 8) == 0) { // Ignore the last byte because that is the null byte from string
-		printf("New sensor data\n");
+		if (DEBUG) printf("New sensor data\n");
 		memcpy(aht20_temperature, buffer+8, 4);
 		memcpy(aht20_humidity, buffer+12, 4);
 		memcpy(bmp280_temperature, buffer+16, 4);
 		memcpy(bmp280_pressure, buffer+20, 4);
 
-		printf("BMP280 - Temperature: %f°C, Pressure %f Pa\n", (float)*bmp280_temperature/100, (float)*bmp280_pressure/256);
-		printf("AHT20 - Temperature: %f°C, Humidity %f%%\n", aht20_calculate_temperature(*aht20_temperature), aht20_calculate_humidity(*aht20_humidity));
+		if (DEBUG) {
+			printf("BMP280 - Temperature: %f°C, Pressure %f Pa\n", (float)*bmp280_temperature/100, (float)*bmp280_pressure/256);
+			printf("AHT20 - Temperature: %f°C, Humidity %f%%\n", aht20_calculate_temperature(*aht20_temperature), aht20_calculate_humidity(*aht20_humidity));
+		}
 	}
 
 	return true;
