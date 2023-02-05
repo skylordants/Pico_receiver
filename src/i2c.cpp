@@ -2,9 +2,7 @@
 
 #include "pico/stdlib.h"
 #include "hardware/i2c.h"
-
-#define SDA_PIN 26
-#define SCL_PIN 27
+#include "i2c.h"
 
 i2c_inst_t *i2c = i2c1;
 
@@ -20,8 +18,8 @@ bool i2c_setup() {
 
 // Write to the specified register
 int i2c_reg_write(const uint addr, const uint8_t reg, uint8_t *buf, const uint8_t nbytes) {
-	int num_bytes_read = 0;
-	uint8_t msg[nbytes + 1];
+	int num_bytes_write = 0;
+	uint8_t msg[1000];
 
 	// Append register address to front of data packet
 	msg[0] = reg;
@@ -30,9 +28,18 @@ int i2c_reg_write(const uint addr, const uint8_t reg, uint8_t *buf, const uint8_
 	}
 
 	// Write data to register(s) over I2C
-	num_bytes_read = i2c_write_blocking(i2c, addr, msg, (nbytes + 1), false);
+	num_bytes_write = i2c_write_blocking(i2c, addr, msg, (nbytes + 1), false);
 
-	return num_bytes_read;
+	return num_bytes_write;
+}
+
+int i2c_write(const uint addr, uint8_t *buf, const uint8_t nbytes) {
+	int num_bytes_write = 0;
+
+	// Write data to register(s) over I2C
+	num_bytes_write = i2c_write_blocking(i2c, addr, buf, nbytes, false);
+
+	return num_bytes_write;
 }
 
 // Read byte(s) from specified register. If nbytes > 1, read from consecutive

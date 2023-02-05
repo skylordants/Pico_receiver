@@ -16,7 +16,7 @@
 
 bool hdc1080_setup () {
 	uint8_t data[1] = {0b00010000};
-	printf("%i\n", i2c_reg_write(HDC1080_ADDRESS, HDC1080_REG_CONF, data, 1));
+	i2c_reg_write(HDC1080_ADDRESS, HDC1080_REG_CONF, data, 1);
 	return true;
 }
 

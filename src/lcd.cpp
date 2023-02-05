@@ -10,9 +10,12 @@
 #include "lcd.h"
 #include "glcdfont.h"
 
-#define BACKLIGHT_PIN 4
-#define CD_PIN 5
-#define RST_PIN 6
+#define BACKLIGHT_PIN 2
+#define CD_PIN 7
+#define RST_PIN 8
+
+#define CO2EQ_THRESHOLD 1000
+#define TVOC_THRESHOLD 350
 
 spi_inst_t *spi;
 
@@ -34,8 +37,8 @@ bool lcd_setup(spi_inst_t *tspi) {
 	gpio_put(SPI_CS_PIN, 1);
 	spi = tspi;
 
-	// Initialize SPI port at 1 MHz
-	spi_init(spi, 20*1000 * 1000);
+	// Initialize SPI port at 20 MHz
+	spi_init(spi, 20*1000*1000);
 
 	// Set SPI format
 	spi_set_format( spi0,   // SPI instance
@@ -177,7 +180,7 @@ bool lcd_write_chars(char *buffer, uint8_t len, uint8_t line, uint8_t pos) {
 }
 
 bool lcd_hud_setup() {
-	char buf[21] = "hPaC%OUTSIDE:INSIDE:";
+	char buf[40] = "hPaC%OUTSIDE:INSIDE:ppm co2ppb tvoc";
 	lcd_write_chars(buf, 3, 5, 20);
 	lcd_write_chars(buf+3, 1, 6, 9);
 	lcd_write_chars(buf+4, 1, 6, 20);
@@ -192,6 +195,9 @@ bool lcd_hud_setup() {
 
 	lcd_ram_select_address(2, 8*5);
 	lcd_ram_write(deg, 5);
+
+	lcd_write_chars(buf+20, 7, 1, 14);
+	lcd_write_chars(buf+27, 8, 0, 14);
 
 	return true;
 }
@@ -209,13 +215,41 @@ bool lcd_hud_update_outside_values(float temperature, float humidity, float pres
 	return true;
 }
 
-bool lcd_hud_update_inside_values(float temperature, float humidity) {
-	char t[10], h[10], p[10];
+bool lcd_hud_update_inside_t_h(float temperature, float humidity) {
+	char t[10], h[10];
 
 	snprintf(t, sizeof t, "%f", temperature);
 	snprintf(h, sizeof h, "%f", humidity);
 
 	lcd_write_chars(t, 5, 2, 3);
 	lcd_write_chars(h, 5, 2, 14);
+	return true;
+}
+
+
+bool lcd_hud_update_inside_air(uint16_t co2eq, uint16_t tvoc) {
+	char c[11], v[11];
+
+	snprintf(c, sizeof c, "%10u", co2eq);
+	snprintf(v, sizeof v, "%10u", tvoc);
+
+	lcd_write_chars(c, 10, 1, 3);
+	lcd_write_chars(v, 10, 0, 3);
+
+	char s[3] = "! ";
+
+	if (co2eq > CO2EQ_THRESHOLD) {
+		lcd_write_chars(s, 1, 1, 23);
+	}
+	else {
+		lcd_write_chars(s+1, 1, 1, 23);
+	}
+
+	if (tvoc > TVOC_THRESHOLD) {
+		lcd_write_chars(s, 1, 0, 23);
+	}
+	else {
+		lcd_write_chars(s+1, 1, 0, 23);
+	}
 	return true;
 }

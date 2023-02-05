@@ -2,8 +2,8 @@
 #define __LCD_H__
 
 #define SPI_RX_PIN 0
-#define SPI_CS_PIN 1
-#define SPI_SCK_PIN 2
+#define SPI_CS_PIN 5
+#define SPI_SCK_PIN 6
 #define SPI_TX_PIN 3
 
 bool lcd_setup(spi_inst_t *spi);
@@ -26,6 +26,8 @@ bool lcd_hud_setup();
 
 bool lcd_hud_update_outside_values(float temperature, float humidity, float pressure);
 
-bool lcd_hud_update_inside_values(float temperature, float humidity);
+bool lcd_hud_update_inside_t_h(float temperature, float humidity);
+
+bool lcd_hud_update_inside_air(uint16_t co2eq, uint16_t tvoc);
 
 #endif
