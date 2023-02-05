@@ -29,22 +29,24 @@ uint16_t hdc1080_h = 0;
 uint16_t sgp30_co2 = 0;
 uint16_t sgp30_tvoc = 0;
 
+SGP30 sgp30;
+HDC1080 hdc1080;
 
 
 uint64_t lasthumidity = 0;
 
 void core1_main() {
 	while (true) {
-		if (sgp30_measure_air_quality(&sgp30_co2, &sgp30_tvoc)) {
+		if (sgp30.measure_air_quality(&sgp30_co2, &sgp30_tvoc)) {
 			lcd_hud_update_inside_air(sgp30_co2, sgp30_tvoc);
 		}
 
 		if (time_us_64() - lasthumidity > HUMIDITY_UPDATE) {
 			lasthumidity = time_us_64();
-			sgp30_set_humidity(AH_for_sgp30(hdc1080_calculate_temperature(hdc1080_t), hdc1080_calculate_humidity(hdc1080_h)));
+			sgp30.set_humidity(AH_for_sgp30(HDC1080::calculate_temperature(hdc1080_t), HDC1080::calculate_humidity(hdc1080_h)));
 
 			uint8_t baseline[6];
-			if (!sgp30_get_baseline(baseline)) {
+			if (!sgp30.get_baseline(baseline)) {
 				printf("Unable to get baseline\n");
 			}
 
@@ -65,8 +67,9 @@ int main() {
 	printf("Starting receiver\n");
 	// Setup stuff
 	i2c_setup();
-	sgp30_setup(&sgp30_co2, &sgp30_tvoc);
-	hdc1080_setup();
+
+	hdc1080 = HDC1080(0);
+	sgp30 = SGP30(0);
 
 	lcd_setup(spi0);
 	lcd_backlight(true);
@@ -78,14 +81,14 @@ int main() {
 	
 
 	while (true) {
-		if (!hdc1080_measure(&hdc1080_t, &hdc1080_h)) {
+		if (!hdc1080.measure(&hdc1080_t, &hdc1080_h)) {
 			printf("Failed measuring HDC1080\n");
 		}
 
 		rf_read_message();
 		lcd_hud_update_outside_values((float)ext_bmp280_t/100, aht20_calculate_humidity(ext_aht20_h), (float)ext_bmp280_p/25600);
 
-		lcd_hud_update_inside_t_h(hdc1080_calculate_temperature(hdc1080_t), hdc1080_calculate_humidity(hdc1080_h));
+		lcd_hud_update_inside_t_h(HDC1080::calculate_temperature(hdc1080_t), HDC1080::calculate_humidity(hdc1080_h));
 	}
 
 	return 0;

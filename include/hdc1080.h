@@ -1,12 +1,18 @@
 #ifndef __HDC1080_H__
 #define __HDC1080_H__
 
-bool hdc1080_setup ();
+#include "pico/stdlib.h"
 
-bool hdc1080_measure (uint16_t *temperature, uint16_t *humidity);
+class HDC1080 {
+public:
+	HDC1080(int temp);
+	HDC1080();
 
-float hdc1080_calculate_temperature(uint16_t temperature);
+	bool measure (uint16_t *temperature, uint16_t *humidity);
+	void print_serial_data();
 
-float hdc1080_calculate_humidity(uint16_t humidity);
+	static float calculate_temperature(uint16_t temperature);
+	static float calculate_humidity(uint16_t humidity);
+};
 
 #endif

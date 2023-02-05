@@ -22,10 +22,20 @@
 
 #define SGP30_INIT_DELAY 60000000
 
-const uint8_t crc_pol = 0x31;
+SGP30::SGP30(int temp)
+	: lasttime(0)
+{
+	init_air_quality();
+}
+
+SGP30::SGP30() {
+
+}
+
+const uint8_t SGP30::crc_pol = 0x31;
 
 // Inspiration: http://www.sunshine2k.de/articles/coding/crc/understanding_crc.html
-uint8_t calculate_crc(uint8_t data_1, uint8_t data_2) {
+uint8_t SGP30::calculate_crc(uint8_t data_1, uint8_t data_2) {
 	
 	uint8_t crc = data_1 ^ 0xff;
 
@@ -46,7 +56,7 @@ uint8_t calculate_crc(uint8_t data_1, uint8_t data_2) {
 	return crc;
 }
 
-int sgp30_read(uint16_t cmd, uint8_t *buf, const uint8_t nbytes, int delay) {
+int SGP30::read(uint16_t cmd, uint8_t *buf, const uint8_t nbytes, int delay) {
 
 	uint8_t cmdbuf[2] = { (uint8_t)(cmd>>8), (uint8_t)(cmd&0x00ff) };
 
@@ -57,7 +67,7 @@ int sgp30_read(uint16_t cmd, uint8_t *buf, const uint8_t nbytes, int delay) {
 	return num_bytes_read;
 }
 
-int sgp30_write(uint16_t cmd, uint8_t *buf, const uint8_t nbytes) {
+int SGP30::write(uint16_t cmd, uint8_t *buf, const uint8_t nbytes) {
 	int num_bytes_written = 0;
 	uint8_t msg[24] = { (uint8_t)(cmd>>8), (uint8_t)(cmd&0x00ff) };
 
@@ -79,9 +89,8 @@ int sgp30_write(uint16_t cmd, uint8_t *buf, const uint8_t nbytes) {
 	return num_bytes_written;
 }
 
-uint64_t lasttime = 0;
-bool sgp30_init_air_quality() {
-	sgp30_write(SGP30_INIT_AIR_QUALITY, NULL, 0);
+bool SGP30::init_air_quality() {
+	write(SGP30_INIT_AIR_QUALITY, NULL, 0);
 	sleep_ms(10);
 	lasttime = time_us_64();
 
@@ -89,10 +98,10 @@ bool sgp30_init_air_quality() {
 }
 
 
-bool sgp30_measure_air_quality(uint16_t *co2eq, uint16_t *tvoc) {
+bool SGP30::measure_air_quality(uint16_t *co2eq, uint16_t *tvoc) {
 	uint8_t data[6];
 
-	int num_bytes_read = sgp30_read(SGP30_MEASURE_AIR_QUALITY, data, 6, 15);
+	int num_bytes_read = read(SGP30_MEASURE_AIR_QUALITY, data, 6, 15);
 
 	if (num_bytes_read != 6) {
 		lasttime = 0;
@@ -104,7 +113,7 @@ bool sgp30_measure_air_quality(uint16_t *co2eq, uint16_t *tvoc) {
 
 
 	if (t_co2eq == 400 && t_tvoc == 0 && time_us_64() - lasttime > SGP30_INIT_DELAY) {
-		sgp30_init_air_quality();
+		init_air_quality();
 	}
 	else {
 		*co2eq = t_co2eq;
@@ -114,33 +123,13 @@ bool sgp30_measure_air_quality(uint16_t *co2eq, uint16_t *tvoc) {
 	return true;
 }
 
-bool repeating_measurement_callback (repeating_timer *t) {
-	uint16_t **data_pointers = (uint16_t **)(t->user_data);
 
-	sgp30_measure_air_quality(data_pointers[0], data_pointers[1]);
-	return true;
-}
-
-uint16_t *data_pointers[2];
-repeating_timer timer;
-
-bool sgp30_setup(uint16_t *co2eq, uint16_t *tvoc) {
-	uint8_t data[9];
-
-	// Start timer
-	data_pointers[0] = co2eq;
-	data_pointers[1] = tvoc;
-
-	//add_repeating_timer_ms(-1000, repeating_measurement_callback, (void *)data_pointers, &timer);
-	return true;
-}
-
-bool sgp30_set_humidity(uint16_t humidity) {
+bool SGP30::set_humidity(uint16_t humidity) {
 	uint8_t data[2] = {(uint8_t)(humidity>>8), (uint8_t)humidity};
-	sgp30_write(SGP30_SET_HUMIDITY, data, 2);
+	write(SGP30_SET_HUMIDITY, data, 2);
 	return true;
 }
 
-bool sgp30_get_baseline(uint8_t baseline[]) {
-	return sgp30_read(SGP30_GET_BASELINE, baseline, 6, 15) == 6;
+bool SGP30::get_baseline(uint8_t baseline[]) {
+	return read(SGP30_GET_BASELINE, baseline, 6, 15) == 6;
 }
