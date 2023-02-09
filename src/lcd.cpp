@@ -9,10 +9,7 @@
 
 #include "lcd.h"
 #include "glcdfont.h"
-
-#define BACKLIGHT_PIN 2
-#define CD_PIN 7
-#define RST_PIN 8
+#include "pins.h"
 
 #define CO2EQ_THRESHOLD 1000
 #define TVOC_THRESHOLD 350
@@ -23,18 +20,18 @@ uint8_t ram_page_address = 0x00;
 uint8_t ram_column_address = 0x00;
 
 bool send_command(uint8_t *buffer, uint8_t len, bool write) {
-	gpio_put(CD_PIN, write);
+	gpio_put(LCD_CD_PIN, write);
 
-	gpio_put(SPI_CS_PIN, 0);
+	gpio_put(LCD_CS_PIN, 0);
 	spi_write_blocking(spi, buffer, len);
-	gpio_put(SPI_CS_PIN, 1);
+	gpio_put(LCD_CS_PIN, 1);
 	return true;
 }
 
 bool lcd_setup(spi_inst_t *tspi) {
-	gpio_init(SPI_CS_PIN);
-  	gpio_set_dir(SPI_CS_PIN, GPIO_OUT);
-	gpio_put(SPI_CS_PIN, 1);
+	gpio_init(LCD_CS_PIN);
+  	gpio_set_dir(LCD_CS_PIN, GPIO_OUT);
+	gpio_put(LCD_CS_PIN, 1);
 	spi = tspi;
 
 	// Initialize SPI port at 20 MHz
@@ -48,27 +45,26 @@ bool lcd_setup(spi_inst_t *tspi) {
 									SPI_MSB_FIRST);
 
 	// Initialize SPI pins
-	gpio_set_function(SPI_SCK_PIN, GPIO_FUNC_SPI);
-	gpio_set_function(SPI_TX_PIN, GPIO_FUNC_SPI);
-	gpio_set_function(SPI_RX_PIN, GPIO_FUNC_SPI);
+	gpio_set_function(LCD_SCK_PIN, GPIO_FUNC_SPI);
+	gpio_set_function(LCD_TX_PIN, GPIO_FUNC_SPI);
 
 
 	// CD
-	gpio_init(CD_PIN);
-	gpio_set_dir(CD_PIN, GPIO_OUT);
+	gpio_init(LCD_CD_PIN);
+	gpio_set_dir(LCD_CD_PIN, GPIO_OUT);
 
 	// Backlight
-	gpio_init(BACKLIGHT_PIN);
-	gpio_set_dir(BACKLIGHT_PIN, GPIO_OUT);
+	gpio_init(LCD_BACKLIGHT_PIN);
+	gpio_set_dir(LCD_BACKLIGHT_PIN, GPIO_OUT);
 
 	// Reset
-	gpio_init(RST_PIN);
-	gpio_set_dir(RST_PIN, GPIO_OUT);
-	gpio_put(SPI_CS_PIN, 0);
-	gpio_put(RST_PIN, 0);
+	gpio_init(LCD_RST_PIN);
+	gpio_set_dir(LCD_RST_PIN, GPIO_OUT);
+	gpio_put(LCD_CS_PIN, 0);
+	gpio_put(LCD_RST_PIN, 0);
 	sleep_ms(500);
-	gpio_put(RST_PIN, 1);
-	gpio_put(SPI_CS_PIN, 1);
+	gpio_put(LCD_RST_PIN, 1);
+	gpio_put(LCD_CS_PIN, 1);
 
 
 	uint8_t data[1];
@@ -119,7 +115,7 @@ bool lcd_setup(spi_inst_t *tspi) {
 }
 
 void lcd_backlight(bool on) {
-	gpio_put(BACKLIGHT_PIN, on);
+	gpio_put(LCD_BACKLIGHT_PIN, on);
 }
 
 void lcd_display_on(bool on) {

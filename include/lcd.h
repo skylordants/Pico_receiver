@@ -1,11 +1,6 @@
 #ifndef __LCD_H__
 #define __LCD_H__
 
-#define SPI_RX_PIN 0
-#define SPI_CS_PIN 5
-#define SPI_SCK_PIN 6
-#define SPI_TX_PIN 3
-
 bool lcd_setup(spi_inst_t *spi);
 
 void lcd_backlight(bool on);
