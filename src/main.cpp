@@ -8,6 +8,8 @@
 #include "hardware/spi.h"
 #include "pico/time.h"
 
+#include "pins.h"
+
 #include "lcd.h"
 #include "rf_receiver.h"
 #include "aht20.h"
@@ -15,6 +17,7 @@
 #include "i2c.h"
 #include "sgp30.h"
 #include "humidity.h"
+#include "at93c46.h"
 
 #define HUMIDITY_UPDATE 5000000
 
@@ -32,8 +35,10 @@ uint16_t sgp30_tvoc = 0;
 SGP30 sgp30;
 HDC1080 hdc1080;
 
+AT93C46 eeprom;
 
 uint64_t lasthumidity = 0;
+uint64_t lastbaseline = 0;
 
 void core1_main() {
 	while (true) {
@@ -45,17 +50,8 @@ void core1_main() {
 			lasthumidity = time_us_64();
 			sgp30.set_humidity(AH_for_sgp30(HDC1080::calculate_temperature(hdc1080_t), HDC1080::calculate_humidity(hdc1080_h)));
 
-			uint8_t baseline[6];
-			if (!sgp30.get_baseline(baseline)) {
-				printf("Unable to get baseline\n");
-			}
-
-			printf("Baseline: ");
-			for (int i = 0; i < 6; i++) {
-				printf("%02x", baseline[i]);
-			}
-			printf("\n");
 		}
+
 
 		sleep_ms(1000);
 	}
@@ -68,8 +64,9 @@ int main() {
 	// Setup stuff
 	i2c_setup();
 
+	eeprom = AT93C46(AT93C46_CS, AT93C46_SK, AT93C46_DI, AT93C46_DO, spi1);
 	hdc1080 = HDC1080(0);
-	sgp30 = SGP30(0);
+	sgp30 = SGP30(&eeprom, !gpio_get(BUTTON_BASELINE_RESTART));
 
 	lcd_setup(spi0);
 	lcd_backlight(true);
