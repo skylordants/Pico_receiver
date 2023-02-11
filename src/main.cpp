@@ -32,9 +32,6 @@ uint32_t ext_bmp280_p = 0;
 uint16_t hdc1080_t = 0;
 uint16_t hdc1080_h = 0;
 
-uint16_t sgp30_co2 = 0;
-uint16_t sgp30_tvoc = 0;
-
 
 RP2040_I2C i2c;
 SGP30 sgp30;
@@ -42,7 +39,6 @@ HDC1080 hdc1080;
 AT93C46 eeprom;
 
 uint64_t lasthumidity = 0;
-uint64_t lastbaseline = 0;
 
 uint64_t button_brightness_last_accepted = 0;
 uint64_t lcd_backlight_start = 0;
@@ -88,8 +84,8 @@ void button_callback(uint gpio, uint32_t event_mask) {
 
 void core1_main() {
 	while (true) {
-		if (sgp30.measure_air_quality(&sgp30_co2, &sgp30_tvoc)) {
-			lcd_hud_update_inside_air(sgp30_co2, sgp30_tvoc);
+		if (sgp30.measure_air_quality()) {
+			lcd_hud_update_inside_air(sgp30.co2eq, sgp30.tvoc);
 		}
 
 		if (time_us_64() - lasthumidity > HUMIDITY_UPDATE) {

@@ -18,7 +18,7 @@
 #define SGP30_GET_SERIAL_ID 0x3682
 
 #define SGP30_RESTART_DELAY 10*60*1000000
-#define SGP30_BASELINE_SAVE_DELAY 5*1*1000000 // Ajutiselt, hiljem 1*60*60*1000000
+#define SGP30_BASELINE_SAVE_DELAY 1*60*60*1000000ul // For testing it should be like 5*1*1000000 to not wait an hour for the first update
 #define SGP30_BASELINE_VALID_DELAY 12*60*60
 
 #define EEPROM_BASELINE_ADDRESS 0
@@ -26,7 +26,9 @@
 #define EEPROM_TIME_ADDRESS (EEPROM_BASELINE_ADDRESS + EEPROM_BASELINE_LENGTH)
 
 SGP30::SGP30(AT93C46 *eeprom, RP2040_I2C *i2c, bool baseline_valid)
-	: _zerovalue_first_time(0)
+	: co2eq(0)
+	, tvoc(0)
+	, _zerovalue_first_time(0)
 	, _baseline_valid(baseline_valid)
 	, _eeprom(eeprom)
 	, _i2c(i2c)
@@ -110,7 +112,7 @@ bool SGP30::init_air_quality() {
 }
 
 
-bool SGP30::measure_air_quality(uint16_t *co2eq, uint16_t *tvoc) {
+bool SGP30::measure_air_quality() {
 	uint8_t data[6];
 
 	int num_bytes_read = read(SGP30_MEASURE_AIR_QUALITY, data, 6, 15);
@@ -134,8 +136,8 @@ bool SGP30::measure_air_quality(uint16_t *co2eq, uint16_t *tvoc) {
 		}
 	}
 	else {
-		*co2eq = t_co2eq;
-		*tvoc = t_tvoc;
+		co2eq = t_co2eq;
+		tvoc = t_tvoc;
 
 		_zerovalue_first_time = -1;
 

@@ -11,13 +11,16 @@ public:
 	SGP30(AT93C46 *eeprom, RP2040_I2C *i2c, bool baseline_valid);
 	SGP30();
 
-	/// @brief Measure air quality. Call at 1 Hz frequency for best result.
-	bool measure_air_quality(uint16_t *co2eq, uint16_t *tvoc);
+	/// @brief Measure air quality. Call at 1 Hz frequency for best result. The results can be read from co2eq and tvoc variables.
+	bool measure_air_quality();
 	
 	bool get_baseline(uint8_t baseline[]);
 
 	bool set_baseline(uint8_t baseline[]);
 	bool set_humidity(uint16_t humidity);
+
+	uint16_t co2eq;
+	uint16_t tvoc;
 private:
 	int read(uint16_t cmd, uint8_t *buf, const uint8_t nbytes, int delay);
 	int write(uint16_t cmd, uint8_t *buf, const uint8_t nbytes);
