@@ -14,7 +14,7 @@
 #include "rf_receiver.h"
 #include "aht20.h"
 #include "hdc1080.h"
-#include "i2c.h"
+#include "rp2040_i2c.h"
 #include "sgp30.h"
 #include "humidity.h"
 #include "at93c46.h"
@@ -35,9 +35,10 @@ uint16_t hdc1080_h = 0;
 uint16_t sgp30_co2 = 0;
 uint16_t sgp30_tvoc = 0;
 
+
+RP2040_I2C i2c;
 SGP30 sgp30;
 HDC1080 hdc1080;
-
 AT93C46 eeprom;
 
 uint64_t lasthumidity = 0;
@@ -122,11 +123,10 @@ int main() {
 	gpio_set_irq_enabled(BUTTON_2, GPIO_IRQ_EDGE_FALL|GPIO_IRQ_EDGE_RISE, true);
 	gpio_set_irq_enabled(BUTTON_3, GPIO_IRQ_EDGE_FALL|GPIO_IRQ_EDGE_RISE, true);
 
-	i2c_setup();
-
+	i2c = RP2040_I2C(I2C_INSTANCE, I2C_SDA_PIN, I2C_SCL_PIN, I2C_BAUDRATE);
 	eeprom = AT93C46(AT93C46_CS, AT93C46_SK, AT93C46_DI, AT93C46_DO, spi1);
-	hdc1080 = HDC1080(0);
-	sgp30 = SGP30(&eeprom, !gpio_get(BUTTON_BASELINE_RESTART));
+	hdc1080 = HDC1080(&i2c);
+	sgp30 = SGP30(&eeprom, &i2c, !gpio_get(BUTTON_BASELINE_RESTART));
 
 	lcd_setup(spi0);
 	lcd_hud_setup();
@@ -135,7 +135,6 @@ int main() {
 
 	multicore_launch_core1(core1_main);
 	
-
 	while (true) {
 		if (!hdc1080.measure(&hdc1080_t, &hdc1080_h)) {
 			printf("Failed measuring HDC1080\n");

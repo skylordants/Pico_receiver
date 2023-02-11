@@ -3,7 +3,7 @@
 
 #include "pico/stdlib.h"
 
-#include "i2c.h"
+#include "rp2040_i2c.h"
 
 #define AHT20_ADDRESS 0x38
 #define AHT20_REG_STATUS 0x71
@@ -14,6 +14,7 @@
 #define AHT20_TRIG_P1 0x33
 #define AHT20_TRIG_P2 0x00
 
+/* Temporary
 //TODO: Check if working
 bool aht20_setup () {
 	uint8_t data[2];
@@ -49,7 +50,7 @@ bool aht20_measure(uint32_t *temperature, uint32_t* humidity) {
 	*humidity = (int32_t)data[1]<<12 | (int32_t)data[2]<<4 | data[3]>>4;
 
 	return true;
-}
+}*/
 
 float aht20_calculate_temperature(uint32_t temperature) {
 	return (float)(((double)temperature/(1<<20))*200-50);

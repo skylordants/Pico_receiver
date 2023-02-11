@@ -2,36 +2,34 @@
 
 #include <stdio.h>
 
-#include "pico/stdlib.h"
 #include "pico/time.h"
-#include "hardware/timer.h"
 
-#include "i2c.h"
 #include "sgp30.h"
 
 #define SGP30_ADDRESS 0x58
 
-#define EEPROM_BASELINE_ADDRESS 0
-#define EEPROM_BASELINE_LENGTH 4
-#define EEPROM_TIME_ADDRESS (EEPROM_BASELINE_ADDRESS + EEPROM_BASELINE_LENGTH)
-
-#define SGP30_GET_FEATURE_SET 0x202f
-#define SGP30_GET_BASELINE 0x2015
-#define SGP30_SET_BASELINE 0x201e
-#define SGP30_GET_SERIAL_ID 0x3682
-#define SGP30_MEASURE_TEST 0x2032
-#define SGP30_SET_HUMIDITY 0x2061
 #define SGP30_INIT_AIR_QUALITY 0x2003
 #define SGP30_MEASURE_AIR_QUALITY 0x2008
+#define SGP30_GET_BASELINE 0x2015
+#define SGP30_SET_BASELINE 0x201e
+#define SGP30_SET_HUMIDITY 0x2061
+#define SGP30_MEASURE_TEST 0x2032
+#define SGP30_GET_FEATURE_SET 0x202f
+#define SGP30_GET_SERIAL_ID 0x3682
 
 #define SGP30_RESTART_DELAY 10*60*1000000
 #define SGP30_BASELINE_SAVE_DELAY 5*1*1000000 // Ajutiselt, hiljem 1*60*60*1000000
 #define SGP30_BASELINE_VALID_DELAY 12*60*60
 
-SGP30::SGP30(AT93C46 *eeprom, bool baseline_valid)
+#define EEPROM_BASELINE_ADDRESS 0
+#define EEPROM_BASELINE_LENGTH 4
+#define EEPROM_TIME_ADDRESS (EEPROM_BASELINE_ADDRESS + EEPROM_BASELINE_LENGTH)
+
+SGP30::SGP30(AT93C46 *eeprom, RP2040_I2C *i2c, bool baseline_valid)
 	: _zerovalue_first_time(0)
 	, _baseline_valid(baseline_valid)
 	, _eeprom(eeprom)
+	, _i2c(i2c)
 {
 	init_air_quality();
 }
@@ -68,9 +66,9 @@ int SGP30::read(uint16_t cmd, uint8_t *buf, const uint8_t nbytes, int delay) {
 
 	uint8_t cmdbuf[2] = { (uint8_t)(cmd>>8), (uint8_t)(cmd&0x00ff) };
 
-	i2c_write(SGP30_ADDRESS, cmdbuf, 2);
+	_i2c->write(SGP30_ADDRESS, cmdbuf, 2);
 	sleep_ms(delay);
-	int num_bytes_read = i2c_read(SGP30_ADDRESS, buf, nbytes);
+	int num_bytes_read = _i2c->read(SGP30_ADDRESS, buf, nbytes);
 
 	return num_bytes_read;
 }
@@ -92,7 +90,7 @@ int SGP30::write(uint16_t cmd, uint8_t *buf, const uint8_t nbytes) {
 	}
 
 	// Write data to register(s) over I2C
-	num_bytes_written = i2c_write(SGP30_ADDRESS, msg, nbytes/2*3+2);
+	num_bytes_written = _i2c->write(SGP30_ADDRESS, msg, nbytes/2*3+2);
 
 	return num_bytes_written;
 }

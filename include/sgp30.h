@@ -3,10 +3,12 @@
 
 #include "pico/stdlib.h"
 #include "at93c46.h"
+#include "rp2040_i2c.h"
+
 
 class SGP30 {
 public:
-	SGP30(AT93C46 *eeprom, bool baseline_valid);
+	SGP30(AT93C46 *eeprom, RP2040_I2C *i2c, bool baseline_valid);
 	SGP30();
 
 	/// @brief Measure air quality. Call at 1 Hz frequency for best result.
@@ -33,6 +35,7 @@ private:
 	bool _baseline_valid;
 
 	AT93C46 *_eeprom;
+	RP2040_I2C *_i2c;
 
 	static const uint8_t crc_pol;
 	static uint8_t calculate_crc(uint8_t data_1, uint8_t data_2);
