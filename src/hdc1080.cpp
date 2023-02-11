@@ -14,7 +14,9 @@
 #define HDC1080_REG_SERIAL_ID 0xFB
 
 HDC1080::HDC1080 (RP2040_I2C *i2c)
-	: _i2c(i2c)
+	: temperature(0)
+	, humidity(0)
+	, _i2c(i2c)
 {
 	uint8_t data[1] = {0b00010000};
 	_i2c->reg_write(HDC1080_ADDRESS, HDC1080_REG_CONF, data, 1);
@@ -24,7 +26,7 @@ HDC1080::HDC1080 () {
 	
 }
 
-bool HDC1080::measure (uint16_t *temperature, uint16_t *humidity) {
+bool HDC1080::measure () {
 	uint8_t data[4];
 	_i2c->reg_write(HDC1080_ADDRESS, HDC1080_REG_TEMP, data, 0);
 
@@ -39,8 +41,8 @@ bool HDC1080::measure (uint16_t *temperature, uint16_t *humidity) {
 		}
 	} while (read != 4);
 
-	*temperature = (data[0]<<8)|data[1];
-	*humidity = (data[2]<<8)|data[3];
+	temperature = (data[0]<<8)|data[1];
+	humidity = (data[2]<<8)|data[3];
 
 	return true;
 }
@@ -63,4 +65,12 @@ float HDC1080::calculate_temperature(uint16_t temperature) {
 
 float HDC1080::calculate_humidity(uint16_t humidity) {
 	return (float)(((double)humidity/(1<<16))*100);
+}
+
+float HDC1080::calculate_current_temperature() {
+	return calculate_temperature(temperature);
+}
+
+float HDC1080::calculate_current_humidity() {
+	return calculate_humidity(humidity);
 }

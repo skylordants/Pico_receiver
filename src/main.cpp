@@ -29,9 +29,6 @@ uint32_t ext_aht20_h = 0;
 int32_t ext_bmp280_t = 0;
 uint32_t ext_bmp280_p = 0;
 
-uint16_t hdc1080_t = 0;
-uint16_t hdc1080_h = 0;
-
 
 RP2040_I2C i2c;
 SGP30 sgp30;
@@ -90,7 +87,7 @@ void core1_main() {
 
 		if (time_us_64() - lasthumidity > HUMIDITY_UPDATE) {
 			lasthumidity = time_us_64();
-			sgp30.set_humidity(AH_for_sgp30(HDC1080::calculate_temperature(hdc1080_t), HDC1080::calculate_humidity(hdc1080_h)));
+			sgp30.set_humidity(AH_for_sgp30(hdc1080.calculate_current_temperature(), hdc1080.calculate_current_humidity()));
 
 		}
 		
@@ -132,14 +129,14 @@ int main() {
 	multicore_launch_core1(core1_main);
 	
 	while (true) {
-		if (!hdc1080.measure(&hdc1080_t, &hdc1080_h)) {
+		if (!hdc1080.measure()) {
 			printf("Failed measuring HDC1080\n");
 		}
 
 		rf_read_message();
 		lcd_hud_update_outside_values((float)ext_bmp280_t/100, aht20_calculate_humidity(ext_aht20_h), (float)ext_bmp280_p/25600);
 
-		lcd_hud_update_inside_t_h(HDC1080::calculate_temperature(hdc1080_t), HDC1080::calculate_humidity(hdc1080_h));
+		lcd_hud_update_inside_t_h(hdc1080.calculate_current_temperature(), hdc1080.calculate_current_humidity());
 	}
 
 	return 0;
