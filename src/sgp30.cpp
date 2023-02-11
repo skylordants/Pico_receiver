@@ -208,6 +208,7 @@ bool SGP30::update_eeprom_baseline() {
 			if (baseline[i] != baseline_control[i]) {
 				eeprom_set_cal_time(0);
 				_baseline_start_time = time_us_64();
+				printf("ERROR: Failed writing the baseline to the EEPROM\n");
 				return false;
 			}
 		}
