@@ -16,7 +16,6 @@
 #include "hdc1080.h"
 #include "rp2040_i2c.h"
 #include "sgp30.h"
-#include "humidity.h"
 #include "at93c46.h"
 
 #define HUMIDITY_UPDATE 5000000
@@ -87,7 +86,7 @@ void core1_main() {
 
 		if (time_us_64() - lasthumidity > HUMIDITY_UPDATE) {
 			lasthumidity = time_us_64();
-			sgp30.set_humidity(AH_for_sgp30(hdc1080.calculate_current_temperature(), hdc1080.calculate_current_humidity()));
+			sgp30.set_relative_humidity(hdc1080.calculate_current_temperature(), hdc1080.calculate_current_humidity());
 
 		}
 		
