@@ -1,13 +1,25 @@
 #ifndef __AHT20_H__
 #define __AHT20_H__
 
-//Temp
-//bool aht20_setup ();
+#include "rp2040_i2c.h"
 
-//bool aht20_measure(uint32_t *temperature, uint32_t* humidity);
+class AHT20 {
+public:
+	AHT20(RP2040_I2C *i2c);
+	AHT20();
 
-float aht20_calculate_temperature(uint32_t temperature);
+	bool measure();
 
-float aht20_calculate_humidity(uint32_t humidity);
+	static float calculate_temperature(uint32_t temperature);
+	static float calculate_humidity(uint32_t humidity);
+
+	float calculate_current_temperature();
+	float calculate_current_humidity();
+
+	uint32_t temperature;
+	uint32_t humidity;
+private:
+	RP2040_I2C *_i2c;
+};
 
 #endif
