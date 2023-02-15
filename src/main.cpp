@@ -80,6 +80,21 @@ void button_callback(uint gpio, uint32_t event_mask) {
 	}
 }
 
+void setup_buttons() {
+	gpio_init_mask(BUTTON_1|BUTTON_2|BUTTON_3);
+	gpio_set_dir_in_masked(BUTTON_1|BUTTON_2|BUTTON_3);
+	gpio_pull_down(BUTTON_1);
+	gpio_pull_down(BUTTON_2);
+	gpio_pull_down(BUTTON_3);
+
+	gpio_set_irq_enabled_with_callback(BUTTON_1, GPIO_IRQ_EDGE_FALL|GPIO_IRQ_EDGE_RISE, true, button_callback);
+	gpio_set_irq_enabled(BUTTON_2, GPIO_IRQ_EDGE_FALL|GPIO_IRQ_EDGE_RISE, true);
+	gpio_set_irq_enabled(BUTTON_3, GPIO_IRQ_EDGE_FALL|GPIO_IRQ_EDGE_RISE, true);
+}
+
+uint64_t display_last_reset = 0;
+uint64_t air_quality_last = 0;
+
 void core1_main() {
 	while (true) {
 		// Reset display after every 10 min to control glitches in display
@@ -116,16 +131,7 @@ int main() {
 	printf("Starting receiver\n");
 
 	// Setup stuff
-
-	gpio_init_mask(BUTTON_1|BUTTON_2|BUTTON_3);
-	gpio_set_dir_in_masked(BUTTON_1|BUTTON_2|BUTTON_3);
-	gpio_pull_down(BUTTON_1);
-	gpio_pull_down(BUTTON_2);
-	gpio_pull_down(BUTTON_3);
-
-	gpio_set_irq_enabled_with_callback(BUTTON_1, GPIO_IRQ_EDGE_FALL|GPIO_IRQ_EDGE_RISE, true, button_callback);
-	gpio_set_irq_enabled(BUTTON_2, GPIO_IRQ_EDGE_FALL|GPIO_IRQ_EDGE_RISE, true);
-	gpio_set_irq_enabled(BUTTON_3, GPIO_IRQ_EDGE_FALL|GPIO_IRQ_EDGE_RISE, true);
+	setup_buttons();
 
 	i2c = RP2040_I2C(I2C_INSTANCE, I2C_SDA_PIN, I2C_SCL_PIN, I2C_BAUDRATE);
 	eeprom = AT93C46(AT93C46_CS, AT93C46_SK, AT93C46_DI, AT93C46_DO, spi1);
