@@ -13,6 +13,7 @@
 #include "receiver_lcd.h"
 #include "rf_receiver.h"
 #include "aht20.h"
+#include "bmp280.h"
 #include "hdc1080.h"
 #include "rp2040_i2c.h"
 #include "sgp30.h"
@@ -149,7 +150,7 @@ int main() {
 		}
 
 		rf_read_message();
-		lcd.update_outside_values((float)ext_bmp280_t/100, AHT20::calculate_humidity(ext_aht20_h), (float)ext_bmp280_p/25600);
+		lcd.update_outside_values(BMP280::calculate_temperature(ext_bmp280_t), AHT20::calculate_humidity(ext_aht20_h), BMP280::calculate_pressure(ext_bmp280_p)/100);
 		lcd.update_inside_air(sgp30.co2eq, sgp30.tvoc);
 		lcd.update_inside_t_h(hdc1080.calculate_current_temperature(), hdc1080.calculate_current_humidity());
 	}
